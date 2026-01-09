@@ -135,5 +135,5 @@ if submit:
         except Exception as e:
             st.error(f"❌ Erro de ligação: {e}")
 
-st.caption("Sistema de Gestão de Ocorrências BVI - 01-2026")
+st.caption("Sistema de Gestão de Ocorrências BVI - Janeiro-2026")
 
