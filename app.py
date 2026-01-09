@@ -3,7 +3,7 @@ import requests
 import unicodedata
 
 # URL do teu Webhook do Discord
-DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1459146538235465850/0jdNsZWbwEFGTQmy-WuNVhVrWsDzk4nQDrwfJuGO_b2NORdDMZEB1sa6w_lW1X0sGRIB"
+DISCORD_WEBHOOK_URL = st.secrets["discord"]["webhook_url"]
 
 
 st.set_page_config(page_title="BVI - Ocorrências", page_icon="logo.png", layout="centered")
@@ -136,4 +136,5 @@ if submit:
             st.error(f"❌ Erro de ligação: {e}")
 
 st.caption("Sistema de Gestão de Ocorrências BVI - Janeiro-2026")
+
 
