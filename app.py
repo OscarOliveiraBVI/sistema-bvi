@@ -74,7 +74,7 @@ with st.form("formulario_ocorrencia", clear_on_submit=True):
     hora_input = st.text_input("🕜 HORA")
 
     motivo = st.text_input("🦺 MOTIVO")
-    sexo_idade_input = st.text_input("👨 SEXO/IDADE (Ex: F 93)")
+    sexo_idade_input = st.text_input("👨 SEXO/IDADE")
     localidade = st.text_input("📍 LOCALIDADE")
     morada = st.text_input("🏠 MORADA")
     
@@ -86,7 +86,7 @@ with st.form("formulario_ocorrencia", clear_on_submit=True):
     submit = st.form_submit_button("ENVIAR", use_container_width=True)
 
 if submit:
-    if not (nr_ocorrencia and hora_input and motivo and sexo_idade_input and localidade and morada and meios_sel and ops_sel_limpos):
+    if not (nr_ocorrencia and hora_input and motivo and localidade and morada and meios_sel and ops_sel_limpos):
         st.error("⚠️ Por favor, preencha todos os campos obrigatórios!")
     else:
         # 1. Hora
@@ -127,9 +127,9 @@ if submit:
             response = requests.post(DISCORD_WEBHOOK_URL, json={"content": texto_final})
             if response.status_code == 204:
                 st.success("✅ Enviado com sucesso!")
-                st.code(texto_final, language=None)
-                st.balloons()
+                
             else:
                 st.error(f"❌ Erro no Discord: {response.status_code}")
         except Exception as e:
+
             st.error(f"❌ Erro de ligação: {e}")
