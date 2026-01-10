@@ -66,7 +66,7 @@ mapa_pessoal = {normalizar_para_busca(n): n for n in pessoal_original}
 lista_para_selecao = sorted(mapa_pessoal.keys())
 lista_meios = sorted(["ABSC-03", "ABSC-04", "VFCI-04", "VFCI-05","VUCI-02", "VTTU-01", "VTTU-02", "VCOT-02","VLCI-01", "VLCI-03", "VETA-02"])
 
-st.title("🚒 Registo de Ocorrências")
+st.title("Registo de Ocorrências")
 
 with st.form("formulario_ocorrencia", clear_on_submit=True):
     st.subheader("Preencha os dados:")
@@ -155,4 +155,5 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
