@@ -81,7 +81,7 @@ with st.form("formulario_ocorrencia", clear_on_submit=True):
     ops_sel_limpos = st.multiselect("👨🏻‍🚒 OPERACIONAIS", options=lista_para_selecao)
     outros_meios = st.text_input("🚨 OUTROS MEIOS", value="NENHUM")
     
-    submit = st.form_submit_button("ENVIAR", use_container_width=True)
+    submit = st.form_submit_button("SUBMETER", use_container_width=True)
 
 if submit:
     if not (nr_ocorrencia and hora_input and motivo and sexo_idade_input and localidade and morada and meios_sel and ops_sel_limpos):
@@ -155,5 +155,6 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 
