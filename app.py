@@ -7,7 +7,7 @@ import os
 from datetime import datetime
 from supabase import create_client, Client
 
-
+# --- CONFIGURAÇÃO E SEGREDOS ---
 try:
     SUPABASE_URL = st.secrets["SUPABASE_URL"]
     SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
@@ -64,7 +64,7 @@ def criar_excel_oficial(df):
             worksheet.set_column(col_num, col_num, 22)
     return output.getvalue()
 
-
+# --- INTERFACE ---
 st.set_page_config(page_title="BVI - Ocorrências", page_icon="logo.png", layout="centered")
 
 if st.session_state.get("autenticado", False):
@@ -96,7 +96,7 @@ with t1:
                 nomes = [mapa[n] for n in ops]
                 data_agora = datetime.now().strftime("%d/%m/%Y %H:%M")
                 
-                
+                # Verifica se o utilizador escreveu "CODU" no campo
                 e_codu = "CODU" in nr.upper()
                 numero_limpo = apenas_numeros(nr)
                 
@@ -119,7 +119,7 @@ with t1:
                     dados_discord = nova_linha.copy()
                     del dados_discord["data_envio"]
                     
-                    
+                    # Se for CODU, altera o nome do campo apenas no Discord
                     nome_campo_nr = "📕 CODU Nº" if e_codu else "📕 OCORRÊNCIA Nº"
                     
                     mapa_discord = {
@@ -176,3 +176,5 @@ with t2:
             st.error(f"❌ Erro: {e}")
 
 st.markdown(f'<div style="text-align: right; color: gray; font-size: 0.8rem; margin-top: 50px;">{datetime.now().year} © BVI</div>', unsafe_allow_html=True)
+
+
