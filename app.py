@@ -7,7 +7,7 @@ import os
 from datetime import datetime
 from supabase import create_client, Client
 
-
+# Configuração de Segurança e Conexão
 try:
     SUPABASE_URL = st.secrets["SUPABASE_URL"]
     SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
@@ -20,13 +20,17 @@ except Exception as e:
     st.error("⚠️ Verifica os Secrets no Streamlit Cloud!")
     st.stop()
 
+# Nome da tabela conforme o erro indicou (ajustado para o que o Supabase sugeriu)
+TABELA_DB = "ocorrências" 
 
+# Funções Auxiliares
 def limpar_texto(txt):
     return ''.join(c for c in unicodedata.normalize('NFD', txt) 
                   if unicodedata.category(c) != 'Mn').upper()
 
 def apenas_numeros(txt):
-    return ''.join(filter(str.isdigit, txt))
+    nums = ''.join(filter(str.isdigit, txt))
+    return nums if nums else "0"
 
 def formatar_sexo(texto):
     if not texto or not texto.strip(): 
@@ -71,7 +75,7 @@ def criar_excel_oficial(df):
             worksheet.set_column(col_num, col_num, 22)
     return output.getvalue()
 
-
+# Layout da Página
 st.set_page_config(page_title="BVI - Ocorrências", page_icon="logo.png", layout="centered")
 
 if st.session_state.get("autenticado", False):
@@ -111,13 +115,12 @@ with t1:
                 data_agora = datetime.now().strftime("%d/%m/%Y %H:%M")
                 
                 nr_upper = nr.upper()
-                esconder_sexo = False
+                esconder_sexo = ("CDO'S" in nr_upper or "CSRTTM" in nr_upper)
                 
                 if "CODU" in nr_upper:
                     nome_campo_nr = "📕 CODU Nº"
-                elif "CDO'S" in nr_upper or "CSRTTM" in nr_upper:
+                elif esconder_sexo:
                     nome_campo_nr = "📕 CSRTTM Nº"
-                    esconder_sexo = True 
                 else:
                     nome_campo_nr = "📕 OCORRÊNCIA Nº"
                 
@@ -125,7 +128,7 @@ with t1:
                 valor_sexo = formatar_sexo(sex)
                 
                 nova_linha = {
-                    "numero": numero_limpo, 
+                    "numero": int(numero_limpo),
                     "hora": formatar_hora(hr), 
                     "motivo": mot.title(),
                     "sexo": valor_sexo,
@@ -138,13 +141,12 @@ with t1:
                 }
                 
                 try:
-                    
-                    supabase.table("ocorrências").insert(nova_linha).execute()
-                    
+                    supabase.table(TABELA_DB).insert(nova_linha).execute()
                     
                     dados_discord = nova_linha.copy()
                     del dados_discord["data_envio"]
-                    
+                    if dados_discord["numero"] == 0: dados_discord["numero"] = nr.upper()
+
                     mapa_labels = {
                         "numero": nome_campo_nr, "hora": "🕜 HORA", "motivo": "🦺 MOTIVO",
                         "sexo": "👨 SEXO/IDADE", "localidade": "📍 LOCALIDADE", "morada": "🏠 MORADA",
@@ -153,15 +155,13 @@ with t1:
                     
                     linhas_msg = []
                     for k, v in dados_discord.items():
-                        
                         if k == "sexo" and esconder_sexo and v == "Não Aplicável":
                             continue
                         linhas_msg.append(f"**{mapa_labels[k]}** ▶️ {v}")
                     
                     msg_discord = "\n".join(linhas_msg)
                     requests.post(DISCORD_WEBHOOK_URL, json={"content": msg_discord})
-                    
-                    st.success(f"✅ {nome_campo_nr.replace('📕 ', '')} {numero_limpo} guardado!")
+                    st.success(f"✅ Registo guardado!")
                 except Exception as e:
                     st.error(f"❌ Erro ao guardar: {e}")
             else:
@@ -177,7 +177,7 @@ with t2:
                 st.rerun()
     else:
         try:
-            res = supabase.table("ocorrências").select("*").order("data_envio", desc=True).execute()
+            res = supabase.table(TABELA_DB).select("*").order("data_envio", desc=True).execute()
             if res.data:
                 df = pd.DataFrame(res.data)
                 mapa_colunas = {
@@ -195,6 +195,6 @@ with t2:
                 st.dataframe(df_v, use_container_width=True)
                 st.download_button("📥 Excel Oficial", criar_excel_oficial(df_v), f"BVI_{datetime.now().year}.xlsx")
         except Exception as e:
-            st.error(f"❌ Erro ao carregar: {e}")
+            st.error(f"❌ Erro ao carregar histórico: {e}")
 
 st.markdown(f'<div style="text-align: center; color: gray; font-size: 0.8rem; margin-top: 50px;">{datetime.now().year} © BVI</div>', unsafe_allow_html=True)
