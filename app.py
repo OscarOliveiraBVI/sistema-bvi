@@ -20,8 +20,9 @@ except Exception as e:
     st.error("⚠️ Verifica os Secrets no Streamlit Cloud!")
     st.stop()
 
-# Nome da tabela conforme o erro indicou (ajustado para o que o Supabase sugeriu)
-TABELA_DB = "ocorrências" 
+# --- NOME DA TABELA ---
+# Ajustado para "ocorrências" conforme a sugestão do erro do Supabase
+NOME_TABELA = "ocorrências"
 
 # Funções Auxiliares
 def limpar_texto(txt):
@@ -75,7 +76,7 @@ def criar_excel_oficial(df):
             worksheet.set_column(col_num, col_num, 22)
     return output.getvalue()
 
-# Layout da Página
+# Configuração da Página
 st.set_page_config(page_title="BVI - Ocorrências", page_icon="logo.png", layout="centered")
 
 if st.session_state.get("autenticado", False):
@@ -115,20 +116,21 @@ with t1:
                 data_agora = datetime.now().strftime("%d/%m/%Y %H:%M")
                 
                 nr_upper = nr.upper()
-                esconder_sexo = ("CDO'S" in nr_upper or "CSRTTM" in nr_upper)
+                esconder_sexo = False
                 
                 if "CODU" in nr_upper:
                     nome_campo_nr = "📕 CODU Nº"
-                elif esconder_sexo:
+                elif "CDO'S" in nr_upper or "CSRTTM" in nr_upper:
                     nome_campo_nr = "📕 CSRTTM Nº"
+                    esconder_sexo = True
                 else:
                     nome_campo_nr = "📕 OCORRÊNCIA Nº"
                 
-                numero_limpo = apenas_numeros(nr)
+                num_puro = apenas_numeros(nr)
                 valor_sexo = formatar_sexo(sex)
                 
                 nova_linha = {
-                    "numero": int(numero_limpo),
+                    "numero": int(num_puro), 
                     "hora": formatar_hora(hr), 
                     "motivo": mot.title(),
                     "sexo": valor_sexo,
@@ -141,11 +143,14 @@ with t1:
                 }
                 
                 try:
-                    supabase.table(TABELA_DB).insert(nova_linha).execute()
+                    # Envia para a tabela correta com acento
+                    supabase.table(NOME_TABELA).insert(nova_linha).execute()
                     
+                    # Discord
                     dados_discord = nova_linha.copy()
                     del dados_discord["data_envio"]
-                    if dados_discord["numero"] == 0: dados_discord["numero"] = nr.upper()
+                    if dados_discord["numero"] == 0:
+                        dados_discord["numero"] = nr_upper
 
                     mapa_labels = {
                         "numero": nome_campo_nr, "hora": "🕜 HORA", "motivo": "🦺 MOTIVO",
@@ -161,7 +166,8 @@ with t1:
                     
                     msg_discord = "\n".join(linhas_msg)
                     requests.post(DISCORD_WEBHOOK_URL, json={"content": msg_discord})
-                    st.success(f"✅ Registo guardado!")
+                    
+                    st.success(f"✅ Guardado na tabela '{NOME_TABELA}'!")
                 except Exception as e:
                     st.error(f"❌ Erro ao guardar: {e}")
             else:
@@ -177,7 +183,8 @@ with t2:
                 st.rerun()
     else:
         try:
-            res = supabase.table(TABELA_DB).select("*").order("data_envio", desc=True).execute()
+            # Busca na tabela correta com acento
+            res = supabase.table(NOME_TABELA).select("*").order("data_envio", desc=True).execute()
             if res.data:
                 df = pd.DataFrame(res.data)
                 mapa_colunas = {
@@ -194,7 +201,9 @@ with t2:
                 if 'id' in df_v.columns: df_v = df_v.drop(columns=['id'])
                 st.dataframe(df_v, use_container_width=True)
                 st.download_button("📥 Excel Oficial", criar_excel_oficial(df_v), f"BVI_{datetime.now().year}.xlsx")
+            else:
+                st.info("Nenhum dado encontrado.")
         except Exception as e:
-            st.error(f"❌ Erro ao carregar histórico: {e}")
+            st.error(f"❌ Erro ao carregar: {e}")
 
 st.markdown(f'<div style="text-align: center; color: gray; font-size: 0.8rem; margin-top: 50px;">{datetime.now().year} © BVI</div>', unsafe_allow_html=True)
