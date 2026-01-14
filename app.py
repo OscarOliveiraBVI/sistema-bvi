@@ -67,8 +67,8 @@ def mes_extenso(dt_str):
 def criar_excel_oficial(df):
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-        df.to_excel(writer, index=False, sheet_name='Ocorrências', startrow=5)
-        workbook, worksheet = writer.book, writer.sheets['Ocorrências']
+        df.to_excel(writer, index=False, sheet_name='Ocorrencias', startrow=5)
+        workbook, worksheet = writer.book, writer.sheets['Ocorrencias']
         fmt_header = workbook.add_format({'bold': True, 'bg_color': '#1F4E78', 'font_color': 'white', 'border': 1})
         worksheet.write('C2', 'RELATÓRIO OFICIAL BVI', workbook.add_format({'bold': True, 'font_size': 14}))
         for col_num, value in enumerate(df.columns.values):
