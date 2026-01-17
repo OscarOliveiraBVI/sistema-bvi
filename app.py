@@ -103,10 +103,10 @@ with t1:
         loc = st.text_input("📍 LOCALIDADE")
         mor = st.text_input("🏠 MORADA")
         
-        pessoal = sorted(["Luis Esmenio", "Denis Moreira","Francisco Oliveira", "Rafael Fernandes", "Marcia Mondego", "Rui Parada", "Francisco Ferreira", "Pedro Veiga", "Rui Dias", "Artur Lima", "Óscar Oliveira", "Carlos Mendes", "Eric Mauricio", "José Melgo", "Andreia Afonso", "Roney Menezes", "EIP1", "EIP2", "Daniel Fernandes", "Danitiele Menezes", "Diogo Costa", "David Choupina", "Manuel Pinto", "Paulo Veiga", "Ana Maria", "Artur Parada", "Jose Fernandes", "Emilia Melgo", "Alex Gralhos", "Ricardo Costa", "Óscar Esmenio", "D. Manuel Pinto", "Rui Domingues"])
+        pessoal = sorted(["Luis Esmenio", "Denis Moreira","Francisco Oliveira", "Rafael Fernandes", "Marcia Mondego", "Rui Parada", "Francisco Ferreira", "Pedro Veiga", "Rui Dias", "Artur Lima", "Óscar Oliveira", "Carlos Mendes", "Eric Mauricio", "José Melgo", "Andreia Afonso", "Roney Menezes", "EIP1", "EIP2", "Daniel Fernandes", "Danitiele Menezes", "Diogo Costa", "David Choupina", "Manuel Pinto", "Paulo Veiga", "Ana Maria", "Artur Parada", "Jose Fernandes", "Emilia Melgo", "Alex Gralhos", "Ricardo Costa", "Óscar Esmenio", "D. Manuel Pinto", "Rui Domingues", "Sara Domingues"])
         mapa_nomes = {limpar_texto(n): n for n in pessoal}
         
-        meios = st.multiselect("🚒 MEIOS", ["ABSC-03", "ABSC-04", "VFCI-04", "VFCI-05","VUCI-02", "VTTU-01", "VTTU-02", "VCOT-02","VLCI-01", "VLCI-03", "VETA-02"])
+        meios = st.multiselect("🚒 MEIOS", ["ABSC-03", "ABSC-04", "VFCI-04", "VFCI-05","VUCI-02", "VTTU-01", "VTTU-02", "VCOT-02","VLCI-01", "VLCI-03", "VETA-02", "ABTD-06", "VETA-02"])
         ops = st.multiselect("👨🏻‍🚒 OPERACIONAIS", sorted(list(mapa_nomes.keys())))
         out = st.text_input("🚨 OUTROS MEIOS", value="Nenhum")
         
@@ -207,3 +207,4 @@ with t2:
             st.error(f"❌ Erro ao carregar: {e}")
 
 st.markdown(f'<div style="text-align: center; color: gray; font-size: 0.8rem; margin-top: 50px;">{datetime.now().year} © BVI</div>', unsafe_allow_html=True)
+
