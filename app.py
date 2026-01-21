@@ -98,7 +98,7 @@ with t1:
         st.subheader("Nova Ocorrência:")
         nr = st.text_input("📕 OCORRÊNCIA Nº")
         hr = st.text_input("🕜 HORA")
-        mot = st.text_input("🦺 MOTIVO") 
+        mot = st.text_input("🦺 MOTIVO - Prioridade") 
         sex = st.text_input("👨 SEXO/IDADE") 
         loc = st.text_input("📍 LOCALIDADE")
         mor = st.text_input("🏠 MORADA")
