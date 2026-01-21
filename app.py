@@ -98,7 +98,7 @@ with t1:
         st.subheader("Nova Ocorrência:")
         nr = st.text_input("📕 OCORRÊNCIA Nº")
         hr = st.text_input("🕜 HORA")
-        mot = st.text_input("🦺 MOTIVO - Prioridade") 
+        mot = st.text_input("🦺 MOTIVO - PRIORIDADE") 
         sex = st.text_input("👨 SEXO/IDADE") 
         loc = st.text_input("📍 LOCALIDADE")
         mor = st.text_input("🏠 MORADA")
@@ -207,4 +207,5 @@ with t2:
             st.error(f"❌ Erro ao carregar: {e}")
 
 st.markdown(f'<div style="text-align: center; color: gray; font-size: 0.8rem; margin-top: 50px;">{datetime.now().year} © BVI</div>', unsafe_allow_html=True)
+
 
