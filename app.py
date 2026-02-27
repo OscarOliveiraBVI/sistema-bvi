@@ -5,26 +5,21 @@ import pandas as pd
 import io
 import os
 from datetime import datetime
-from supabase import create_client, Client
 
-# Configuração de Segurança e Conexão
+# --- CONFIGURAÇÃO DE SEGURANÇA (Apenas Discord e Admin) ---
 try:
-    SUPABASE_URL = st.secrets["SUPABASE_URL"]
-    SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
     DISCORD_WEBHOOK_URL = st.secrets["DISCORD_WEBHOOK_URL"]
     ADMIN_USER = st.secrets["ADMIN_USER"]
     ADMIN_PASSWORD = st.secrets["ADMIN_PASSWORD"]
-    
-    supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 except Exception as e:
-    st.error("⚠️ Verifica os Secrets no Streamlit Cloud!")
+    st.error("⚠️ Verifica os Secrets no Streamlit Cloud (DISCORD_WEBHOOK_URL, ADMIN_USER, ADMIN_PASSWORD)!")
     st.stop()
 
-# --- NOME DA TABELA ---
-# Ajustado para "ocorrências" conforme a sugestão do erro do Supabase
-NOME_TABELA = "ocorrencias"
+# --- ESTADO DA SESSÃO PARA HISTÓRICO LOCAL ---
+if "historico_ocorrencias" not in st.session_state:
+    st.session_state.historico_ocorrencias = []
 
-# Funções Auxiliares
+# --- FUNÇÕES AUXILIARES ---
 def limpar_texto(txt):
     return ''.join(c for c in unicodedata.normalize('NFD', txt) 
                   if unicodedata.category(c) != 'Mn').upper()
@@ -76,7 +71,7 @@ def criar_excel_oficial(df):
             worksheet.set_column(col_num, col_num, 22)
     return output.getvalue()
 
-# Configuração da Página
+# --- CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(page_title="BVI - Ocorrências", page_icon="logo.png", layout="centered")
 
 if st.session_state.get("autenticado", False):
@@ -87,7 +82,10 @@ if st.session_state.get("autenticado", False):
 
 col1, col2 = st.columns([1, 5])
 with col1:
-    st.image("logo.png", width=90)
+    try:
+        st.image("logo.png", width=90)
+    except:
+        st.write("🚒")
 with col2:
     st.title("Registo de Ocorrências")
 
@@ -106,7 +104,7 @@ with t1:
         pessoal = sorted(["Luis Esmenio", "Denis Moreira","Francisco Oliveira", "Rafael Fernandes", "Marcia Mondego", "Rui Parada", "Francisco Ferreira", "Pedro Veiga", "Rui Dias", "Artur Lima", "Óscar Oliveira", "Carlos Mendes", "Eric Mauricio", "José Melgo", "Andreia Afonso", "Roney Menezes", "EIP1", "EIP2", "Daniel Fernandes", "Danitiele Menezes", "Diogo Costa", "David Choupina", "Manuel Pinto", "Paulo Veiga", "Ana Maria", "Artur Parada", "Jose Fernandes", "Emilia Melgo", "Alex Gralhos", "Ricardo Costa", "Óscar Esmenio", "D. Manuel Pinto", "Rui Domingues", "Sara Domingues"])
         mapa_nomes = {limpar_texto(n): n for n in pessoal}
         
-        meios = st.multiselect("🚒 MEIOS", ["ABSC-03", "ABSC-04", "VFCI-04", "VFCI-05","VUCI-02", "VTTU-01", "VTTU-02", "VCOT-02","VLCI-01", "VLCI-03", "VETA-02", "ABTD-06", "VETA-02"])
+        meios = st.multiselect("🚒 MEIOS", ["ABSC-03", "ABSC-04", "VFCI-04", "VFCI-05","VUCI-02", "VTTU-01", "VTTU-02", "VCOT-02","VLCI-01", "VLCI-03", "VETA-02", "ABTD-06"])
         ops = st.multiselect("👨🏻‍🚒 OPERACIONAIS", sorted(list(mapa_nomes.keys())))
         out = st.text_input("🚨 OUTROS MEIOS", value="Nenhum")
         
@@ -130,7 +128,7 @@ with t1:
                 valor_sexo = formatar_sexo(sex)
                 
                 nova_linha = {
-                    "numero": int(num_puro), 
+                    "numero": num_puro, 
                     "hora": formatar_hora(hr), 
                     "motivo": mot.title(),
                     "sexo": valor_sexo,
@@ -142,14 +140,14 @@ with t1:
                     "data_envio": data_agora
                 }
                 
+                # --- GUARDAR NO HISTÓRICO DA SESSÃO (Em vez do Supabase) ---
+                st.session_state.historico_ocorrencias.append(nova_linha)
+                
+                # --- DISCORD ---
                 try:
-                    # Envia para a tabela correta com acento
-                    supabase.table(NOME_TABELA).insert(nova_linha).execute()
-                    
-                    # Discord
                     dados_discord = nova_linha.copy()
                     del dados_discord["data_envio"]
-                    if dados_discord["numero"] == 0:
+                    if dados_discord["numero"] == "0":
                         dados_discord["numero"] = nr_upper
 
                     mapa_labels = {
@@ -167,9 +165,9 @@ with t1:
                     msg_discord = "\n".join(linhas_msg)
                     requests.post(DISCORD_WEBHOOK_URL, json={"content": msg_discord})
                     
-                    st.success(f"✅ Guardado na tabela '{NOME_TABELA}'!")
+                    st.success("✅ Ocorrência enviada com sucesso!")
                 except Exception as e:
-                    st.error(f"❌ Erro ao guardar: {e}")
+                    st.error(f"❌ Erro ao enviar para o Discord: {e}")
             else:
                 st.error("⚠️ Preencha os campos obrigatórios!")
 
@@ -182,30 +180,27 @@ with t2:
                 st.session_state.autenticado = True
                 st.rerun()
     else:
-        try:
-            # Busca na tabela correta com acento
-            res = supabase.table(NOME_TABELA).select("*").order("data_envio", desc=True).execute()
-            if res.data:
-                df = pd.DataFrame(res.data)
-                mapa_colunas = {
-                    "numero": "📕 OCORRÊNCIA Nº", "hora": "🕜 HORA", "motivo": "🦺 MOTIVO",
-                    "sexo": "👨 SEXO/IDADE", "localidade": "📍 LOCALIDADE", "morada": "🏠 MORADA",
-                    "meios": "🚒 MEIOS", "operacionais": "👨🏻‍🚒 OPERACIONAIS", 
-                    "outros": "🚨 OUTROS MEIOS", "data_envio": "📅 DATA DO ENVIO"
-                }
-                df_v = df.rename(columns=mapa_colunas)
-                st.subheader("📊 Totais")
-                df_v['Mês'] = df_v['📅 DATA DO ENVIO'].apply(mes_extenso)
-                st.table(df_v.groupby('Mês').size().reset_index(name='Total'))
-                st.subheader("📋 Histórico")
-                if 'id' in df_v.columns: df_v = df_v.drop(columns=['id'])
-                st.dataframe(df_v, use_container_width=True)
-                st.download_button("📥 Excel Oficial", criar_excel_oficial(df_v), f"BVI_{datetime.now().year}.xlsx")
-            else:
-                st.info("Nenhum dado encontrado.")
-        except Exception as e:
-            st.error(f"❌ Erro ao carregar: {e}")
+        # --- CARREGAR DADOS DA SESSÃO (Em vez do Supabase) ---
+        if st.session_state.historico_ocorrencias:
+            df = pd.DataFrame(st.session_state.historico_ocorrencias)
+            
+            mapa_colunas = {
+                "numero": "📕 OCORRÊNCIA Nº", "hora": "🕜 HORA", "motivo": "🦺 MOTIVO",
+                "sexo": "👨 SEXO/IDADE", "localidade": "📍 LOCALIDADE", "morada": "🏠 MORADA",
+                "meios": "🚒 MEIOS", "operacionais": "👨🏻‍🚒 OPERACIONAIS", 
+                "outros": "🚨 OUTROS MEIOS", "data_envio": "📅 DATA DO ENVIO"
+            }
+            df_v = df.rename(columns=mapa_colunas)
+            
+            st.subheader("📊 Totais")
+            df_v['Mês'] = df_v['📅 DATA DO ENVIO'].apply(mes_extenso)
+            st.table(df_v.groupby('Mês').size().reset_index(name='Total'))
+            
+            st.subheader("📋 Histórico (Sessão Atual)")
+            st.dataframe(df_v, use_container_width=True)
+            
+            st.download_button("📥 Excel Oficial", criar_excel_oficial(df_v), f"BVI_{datetime.now().year}.xlsx")
+        else:
+            st.info("Nenhum dado registado nesta sessão.")
 
 st.markdown(f'<div style="text-align: center; color: gray; font-size: 0.8rem; margin-top: 50px;">{datetime.now().year} © BVI</div>', unsafe_allow_html=True)
-
-
